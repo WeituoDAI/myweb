@@ -30,8 +30,6 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
 <div id="choosebyhand">
 	1.Please choose some points by hand in the left graph
 	<button type="submit" id="btn" onclick = "btn()" >Skope-rules</button>
-	
-	
 </div>
    
 <br>
@@ -66,11 +64,19 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
 </div>
 
 
+<br>
+<div id="GOBACK">
+	<button type="submit" id="goback" onclick = "goback()" >Go Back</button>
+</div>
+
 
 <svg width="2000" height="1000" id="mainsvg" class="svgs"></svg>
   
   
 <script>
+	
+	
+
       // The following code is the typical routine of my d3.js code. 
       const svg = d3.select('svg');
       const width = svg.attr('width');
@@ -257,14 +263,15 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
       	
       	
       	//we need to do kmeans(dbscan) before kmeans_skope(dbscan_skope)	
+      	document.getElementById("goback").style.visibility= "hidden "; 
 	document.getElementById("kmeans_skope").style.visibility= "hidden "; 
 	document.getElementById("dbscan_skope").style.visibility= "hidden "; 
 
 
       	//function of the button "skope-rules"
        function btn(){
-       			d3.select("#kmeans").remove()
-				d3.select('#dbscan').remove()
+       			document.getElementById("formkmeans").style.visibility= "hidden ";
+				document.getElementById("formdbscan").style.visibility= "hidden ";
        		        var d=c.toString()	//a 0-1 array of size Datalength, means if a point is selected or not 
        			$.ajax({
 	       			type:"POST",
@@ -276,6 +283,7 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
 		       			       alert("please choose some points");
 		       			       }
 		       		      else{
+		      		            	document.getElementById("goback").style.visibility= "visible"; 
 						d3.select("#textskope").remove() //remove the previous result
 		       		      showresultskope(data)	//show the result of skope-rules
 		       		      }
@@ -296,8 +304,10 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
       
       
 	 function kmeansbtn(){
-	  	d3.select("#choosebyhand").remove()
-		d3.select('#dbscan').remove()
+	 
+	        document.getElementById("choosebyhand").style.visibility= "hidden ";
+		document.getElementById("formdbscan").style.visibility= "hidden ";
+            	document.getElementById("goback").style.visibility= "visible"; 
 	 
 	 	NoC=document.form1.ncl.value//number of clusters   
 	 	if(NoC==null){alert("please enter an integer")}		
@@ -383,8 +393,9 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
 	}
 	
 	function dbscanbtn(){
-	  	d3.select("#choosebyhand").remove()
-		d3.select('#kmeans').remove()
+       	document.getElementById("formkmeans").style.visibility= "hidden ";
+		document.getElementById("choosebyhand").style.visibility= "hidden ";
+            	document.getElementById("goback").style.visibility= "visible"; 
 	 	epsilon=document.form3.epsilon.value
 		M = document.form3.M.value
 
@@ -412,6 +423,22 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
 					N_CLUSTER = NoC
 	       			}
        	})
+		
+	}
+	function goback(){
+		
+		document.getElementById("formkmeans").style.visibility= "visible";
+		document.getElementById("choosebyhand").style.visibility= "visible";
+		document.getElementById("formdbscan").style.visibility= "visible";
+		document.getElementById("dbscan_skope").style.visibility= "hidden";
+		document.getElementById("kmeans_skope").style.visibility= "hidden";
+            	document.getElementById("goback").style.visibility= "hidden"; 
+
+		d3.select('#legend').remove()
+		d3.select("#textskope").remove()
+		
+		mainGroup1.selectAll('circle').attr('fill',d=>color(d))
+		mainGroup2.selectAll('circle').attr('fill',d=>color(d))
 		
 	}
 	
