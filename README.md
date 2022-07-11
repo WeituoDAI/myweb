@@ -22,7 +22,7 @@ Front-end	D3.js
 
 Back-end	python3 Flask
 
-Packages demanded (umap,t-sne,pca,Skope-rules,numpy,pandas,sklearn, skcit....) 
+Packages demanded (umap,t-sne,pca,Skope-rules,numpy,pandas,sklearn....) 
 
 
 
