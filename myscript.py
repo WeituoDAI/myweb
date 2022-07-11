@@ -27,6 +27,7 @@ def mytsne(X):
 def Dataset():
 	return pd.read_csv('static/BN_XGB_SHAP.csv', encoding='latin') 
 
+# get the feature names
 def getvariable(data):
 	a = data.columns[:-1]
 	b= len(a)
@@ -39,8 +40,10 @@ def Myfun0(fun,pathtosave):
 	X=data[variable]
 	X_shap = data[shapvariable]
 	y = data[target]
+	#the initial data values needs the standarization(but the shap values does not)
 	newX=fun(StandardScaler().fit_transform(X))
 	newX_shap = fun(X_shap)
+	#save the file with data after pca()/umap()/tsne()
 	newdata = pd.DataFrame()
 	newdata['x0']=newX[:,0]
 	newdata['x1']=newX[:,1]
@@ -73,43 +76,32 @@ def Myskope(X,y,Feature_names):
 	precision = round(skp.rules_[0][1][0],2)
 	recall = round(skp.rules_[0][1][1],2)
 	
-	
+	#this prediction is the prediction of skope-rules
 	prediction = skp.predict_top_rules(X,1)
 	
 	return {"rule":myrule,"precision":precision,"recall":recall},prediction
 
-
-def Myfun_skope(a,filetoread):
-	dataset=pd.read_csv('static/banknote.csv', encoding='latin') 	
-	filename = filetoread
-	newdata=pd.read_csv(filename, encoding='latin')	
-	newdata['label2']=a
-	
+def Myfun_skope(a):
+	dataset=pd.read_csv('static/banknote.csv', encoding='latin') 		
 	X=dataset.drop(axis=1, labels=dataset.columns[-1],inplace=False)		
 	Feature_names=dataset.columns[:-1]
 	(rules,prediction)=Myskope(X,a,Feature_names)
 	
-	p=0
-	q=0
+	Label = Dataset()['label']#this is the prediction of xgboost
+	
+	p=0#average prediction(xgboost) of points selected
+	q=0#average prediction(xgboost) of points triggered by the rule
 	for i in range(len(a)):
 		if a[i]==1:
-			p=p+newdata['label'][i]
+			p=p+Label[i]
 		if prediction[i]==1:
-			q=q+newdata['label'][i]
+			q=q+Label[i]
 	q=round(q/sum(prediction),2)			
 	p=round(p/sum(a),2)	
 	
 	return rules,float(sum(a)),p,float(sum(prediction)),q,list(prediction)
-	
+	## Rule,Nb of points selected,average prediction.Nb of points triggered by the rule,average prediction of these points,prediction.
 
-def Myfun_skope_umap(a):
-	return Myfun_skope(a,"static/data_umap.csv")
-
-def Myfun_skope_pca(a):
-	return Myfun_skope(a,"static/data_pca.csv")
-
-def Myfun_skope_tsne(a):
-	return Myfun_skope(a,"static/data_tsne.csv")
 
 	
 def mykmeans(X,N_clusters):
@@ -124,6 +116,8 @@ def Mykmeans_load(filename,N_clusters):
 	
 def mydbscan(epsilon,M,X):
 	z = DBSCAN(eps = epsilon, min_samples = M+1,algorithm='brute').fit_predict(X)
+	# the result of dbscan is an array, with value (-1)0,1,2,...,N-1 (N is number of clusters)
+	# point with value -1 is the point isolate (please check the theory of dbscan)
 	if -1 in z:
 		z=z+1
 	return list(z)

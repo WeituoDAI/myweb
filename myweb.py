@@ -14,6 +14,7 @@ CORS(app)
 
 app.secret_key = "bonjour"
 
+## transform string a to an array
 def Getlabel(a):
 	b = a.split(",")
 	for i in range(len(b)):
@@ -54,15 +55,10 @@ def umap():
 def run():
 	b=Getlabel(request.form.get("ids"))
 	if sum(b)==0:
-		return '0'
+		return '0' ##so that the front-end gives an alert
 	else:
 		session['number']=sum(b)
-	if session['rd']=='tsne':
-		x = Myfun_skope_tsne(b)
-	elif session['rd']=='pca':
-		x = Myfun_skope_pca(b)
-	elif session['rd']=='umap':
-		x = Myfun_skope_umap(b)
+		x = Myfun_skope(b)
 	return {'rule':x[0],'nop':x[1],'avp':x[2],'pfr':x[3],'avpr':x[4]}
 
 @app.route('/kmeans',methods=['POST'])
