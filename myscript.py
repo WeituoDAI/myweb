@@ -12,6 +12,9 @@ from sklearn.cluster import KMeans
 from sklearn.cluster import DBSCAN
 
 
+import xgboost as xgb
+
+
 def mypca(X):
 	pca = PCA(n_components=2,random_state=500)
 	return pca.fit_transform(X)
@@ -128,4 +131,64 @@ def Mydbscan_load(filename,epsilon,M):
 	z= mydbscan(epsilon,M,X)
 	N=len(np.unique(z))
 	return z,N
+	
+
+def myxgb(X,y):
+	clf = xgb.XGBClassifier(
+		n_estimators=50,
+		enable_categorical=False,  #  si True, tree_method = "gpu_hist" or "hist" or "approx"
+		tree_method="approx",      # "gpu_hist" or "hist" or "approx" or "exact"
+		random_state=0
+		#max_depth,booster,tree_method,learning_rate ...
+	)
+	clf.fit(X,y)
+	return clf.feature_importances_
+
+
+def Myfun_xgb1(a,J):
+	data = Dataset()
+	(variable, shapvariable, target) = getvariable(data)
+	X=data[variable]
+	
+	if(J=='1'or J=='3'):
+		y = data[target]
+	elif(J =='2'or J=='4'):
+		dataset =pd.read_csv('static/banknote.csv', encoding='latin') 		
+		y = dataset[dataset.columns[-1]]
+
+	X_new = []
+	m = len(variable)
+		
+	for i in range(m):
+		X_new.append([])
+	y_new = []
+	
+	#get the new dataset corresponding to the segment (a)
+	for i in range(len(y)):
+		if a[i]==1:
+			y_new.append(y[i])
+			for j in range(m):
+				X_new[j].append(X.iloc[i,j])
+	X_NEW = pd.DataFrame()
+	for i in range(m):
+		X_NEW[variable[i]]=X_new[i]
+	
+			
+	fti = myxgb(X_NEW,y_new)
+	z = {}
+	for i in range(m):
+		z[variable[i]]=fti[i]
+	# sort the feature according to feature importance	
+	c = sorted(z.items(),key = lambda d:d[1],reverse =True)
+	d = {}
+	for i in range(len(c)):
+    		d[c[i][0]]=round(float(c[i][1]),3)
+	return 'Feature Importances: '+ str(d)
+	
+
+
+	
+	
+	
+	
 

@@ -65,6 +65,20 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
 
 
 <br>
+<div id="XGBLOCAL">
+	<button type="submit" id="xgblocal1" onclick = "xgblocal(1)" >Run xgboost on the segment chosen with the prediction of initial model</button>
+	<br>
+	
+	<button type="submit" id="xgblocal2" onclick = "xgblocal(2)" >Run xgboost on the segment chosen with initial target value</button>
+	<br>
+	<button type="submit" id="xgblocal3" onclick = "xgblocal(3)" >Run xgboost on the segment triggered by the rule with the prediction of initial model</button>
+	<br>
+	<button type="submit" id="xgblocal4" onclick = "xgblocal(4)" >Run xgboost on the segment triggered by the rule with initial target value</button>
+</div>
+
+
+
+<br>
 <div id="GOBACK">
 	<button type="submit" id="goback" onclick = "goback()" >Go Back</button>
 </div>
@@ -266,6 +280,8 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
       	document.getElementById("goback").style.visibility= "hidden "; 
 	document.getElementById("kmeans_skope").style.visibility= "hidden "; 
 	document.getElementById("dbscan_skope").style.visibility= "hidden "; 
+	document.getElementById("XGBLOCAL").style.visibility= "hidden "; 
+
 
 
       	//function of the button "skope-rules"
@@ -293,6 +309,15 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
       
 
       function showresultskope(data){
+	      	document.getElementById("xgblocal1").style.visibility= "visible"; 
+	      	document.getElementById("xgblocal2").style.visibility= "visible"; 
+	      	document.getElementById("xgblocal3").style.visibility= "visible"; 
+      	      	document.getElementById("xgblocal4").style.visibility= "visible"; 
+      	      	document.getElementById("xgblocal1").removeAttribute("disabled");
+      	      	document.getElementById("xgblocal2").removeAttribute("disabled");
+      	      	document.getElementById("xgblocal3").removeAttribute("disabled");
+      	      	document.getElementById("xgblocal4").removeAttribute("disabled");
+      	      	      	      	
       		rule=data.rule
       		var textskope = svg.append('g').attr('id','textskope')
       		.attr('transform', `translate(${margin.left}, 50)`)
@@ -368,12 +393,12 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
 		if(n<0){alert("please choose a legal cluster")}
 		if(n>=N_CLUSTER){alert("please choose a legal cluster")}
 		//construct a 0-1 array of size Datalength, 1 means that point is in the cluster chosen
-		newlabel = new Array(Datalength)
+
 		for(i=0;i<Datalength;i++){
-			newlabel[i]=0
-			if(Labelcluster[i]==n){newlabel[i]=1}
+			c[i]=0
+			if(Labelcluster[i]==n){c[i]=1}
 		}
-		str = newlabel.toString()
+		str = c.toString()
 		
 		$.ajax({
        			type:"POST",
@@ -433,6 +458,10 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
 		document.getElementById("dbscan_skope").style.visibility= "hidden";
 		document.getElementById("kmeans_skope").style.visibility= "hidden";
             	document.getElementById("goback").style.visibility= "hidden"; 
+		document.getElementById("xgblocal1").style.visibility= "hidden"; 
+		document.getElementById("xgblocal2").style.visibility= "hidden"; 
+		document.getElementById("xgblocal3").style.visibility= "hidden"; 
+		document.getElementById("xgblocal4").style.visibility= "hidden"; 
 
 		d3.select('#legend').remove()
 		d3.select("#textskope").remove()
@@ -441,6 +470,39 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
 		mainGroup2.selectAll('circle').attr('fill',d=>color(d))
 		
 	}
+	
+	
+	function xgblocal(j){
+		str = c.toString()
+		J = j.toString()
+
+		document.getElementById("xgblocal"+J).setAttribute("disabled", true);
+
+
+		$.ajax({
+       			type:"POST",
+       			url:"/xgblocal",
+       			data:{"ids": str,
+       				"J": J
+       			      },
+       			success: function(data){         				
+       				TEXT = data.slice(start=0,end=-1)
+					k = parseInt(data.charAt(data.length-1))
+
+					if(k==1){TEXT="Run xgboost on the segment chosen with the prediction of initial model. "+TEXT}
+					else if(k==2){TEXT="Run xgboost on the segment chosen with initial target value. "+TEXT}
+					else if(k==3){TEXT = 'Run xgboost on the segment triggered by the rule with the prediction of initial model. '+ TEXT}						
+					else if(k==4){TEXT = 'Run xgboost on the segment triggered by the rule with initial target value. ' +TEXT}
+					d3.select('#textskope')
+					.append('text').attr('y',75+15*k).text(TEXT).attr('fill','black')
+					}
+			})		
+		
+		}
+		
+	
+
+	
 	
 	
 </script> 

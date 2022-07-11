@@ -37,6 +37,7 @@ def tsne():
 @app.route('/pca',methods=['POST','GET'])
 def pca():
 	if(request.method=="POST"):
+		Myfun_pca()
 		session['rd']='pca'
 		session['filename']="static/data_pca.csv"
 		return render_template("cluster_skope-rules.html", filename =session['filename'] ,rd=session['rd'])
@@ -45,6 +46,7 @@ def pca():
 @app.route('/umap',methods=['POST','GET'])
 def umap():	
 	if(request.method=="POST"):
+		Myfun_umap()
 		session['rd']='umap'
 		session['filename']="static/data_umap.csv"
 		Myfun_umap()
@@ -59,6 +61,8 @@ def run():
 	else:
 		session['number']=sum(b)
 		x = Myfun_skope(b)
+		session['pf']=str(x[5])[1:-1]
+
 	return {'rule':x[0],'nop':x[1],'avp':x[2],'pfr':x[3],'avpr':x[4]}
 
 @app.route('/kmeans',methods=['POST'])
@@ -76,6 +80,17 @@ def DBSCAN():
 	M= int(M)	
 	(z,N) = Mydbscan_load(session['filename'],epsilon,M)
 	return {"label":str(z),"numberofcluster":str(N)}
+
+@app.route('/xgblocal',methods=['POST'])
+def XGBlocal():
+	J = request.form.get("J")
+	if J=='1' or J=='2':
+		b=Getlabel(request.form.get("ids"))
+	else:
+		b =Getlabel(session['pf'])
+	return Myfun_xgb1(b,J)+J
+	
+
 
 if __name__ =="__main__":
     app.run(port=2024,host="127.0.0.1",debug=True)
