@@ -20,10 +20,18 @@ The left graph shows the shap values after {{rd}} .
 The right graph shows the data values after {{rd}} .</p>
 
 
+<p>
+You can choose a segment(some points) in the graph, we will give you a rule(skope-rules) corresponding to that segment.
+You have 3 ways to choose the segment, by hand or kmeans or dbscan.
+</p>
+
+<br>
 
 <div id="choosebyhand">
-	Choose points by hand
+	1.Please choose some points by hand in the left graph
 	<button type="submit" id="btn" onclick = "btn()" >Skope-rules</button>
+	
+	
 </div>
    
 <br>
@@ -31,12 +39,12 @@ The right graph shows the data values after {{rd}} .</p>
 
 <div id="formkmeans">
     <form id="kmeans" name ="form1" onsubmit="return false" action="##" method="post">
-	K-means number of clusters: <input type="text" name="ncl">
+	2.K-means <br>number of clusters: <input type="text" name="ncl">
         <input type="button" value="cluster" onclick="kmeansbtn()" value ="Kmeans">
     </form>
     <form id="kmeans_skope" name ="form2" onsubmit="return false" action="##" method="post">
     	choose one cluster to skope-rule: <input type="text" name="clusterchosen">
-        <input type="button" value="cluster" onclick="kmeansskope(0)" value ="skope">
+        <input type="button" value="Skope-rules" onclick="Skope(0)" value ="skope">
     </form>
 </div>
 
@@ -47,19 +55,19 @@ The right graph shows the data values after {{rd}} .</p>
 
 <div id="formdbscan">
     <form id="dbscan" name ="form3" onsubmit="return false" action="##" method="post">
-	DBSCAN    epsilon: <input type="text" name="epsilon">
+	3.DBSCAN<br>    epsilon: <input type="text" name="epsilon">
 		M: <input type="text" name="M">
         <input type="button" value="cluster" onclick="dbscanbtn()" value ="Kmeans">
     </form>
     <form id="dbscan_skope" name ="form4" onsubmit="return false" action="##" method="post">
     	choose one cluster to skope-rule: <input type="text" name="clusterchosen2">
-        <input type="button" value="cluster" onclick="kmeansskope(1)" value ="skope">
+        <input type="button" value="Skope-rules" onclick="Skope(1)" value ="skope">
     </form>
 </div>
 
 
 
-  <svg width="2000" height="1000" id="mainsvg" class="svgs"></svg>
+<svg width="2000" height="1000" id="mainsvg" class="svgs"></svg>
   
   
 <script>
@@ -95,16 +103,14 @@ The right graph shows the data values after {{rd}} .</p>
         Note that you can also preprocessing data in your own way using your prefered language, e.g., Python. 
       */
       
-      var Datalength=0
+	var Datalength=0
       
-	var c = new Array();
+	var c = new Array();//for later use
     
       d3.csv('{{filename}}').then(data => {
           // calculationg scales:   
-          
-        //  console.log(data.length)
-        
-        Datalength=data.length
+         
+          Datalength=data.length;
                   
           let a1=Infinity
           let a2=Infinity
@@ -116,7 +122,7 @@ The right graph shows the data values after {{rd}} .</p>
           let sb1=-Infinity
           let sb2=-Infinity
           
-          for(i=0;i<data.length;i++){
+          for(i=0;i<Datalength;i++){
           	let x1=parseFloat(x1Value(data[i]))
           	let x2=parseFloat(x2Value(data[i]))
           	let s1=parseFloat(xValue(data[i]))
@@ -140,11 +146,13 @@ The right graph shows the data values after {{rd}} .</p>
           		{sb2=s2}         		
           }
                       	    
+                      	    
+          // for the variable space
           x2Scale.domain([1.1*a2,1.1*b2]).range([0, innerHeight]);
           x1Scale.domain([1.1*a1,1.1*b1]).range([0, innerWidth*2/5]);   
-          // data-join for circle: 
+
           
-          
+          // data-join for circle:  
           const myCircle2 = mainGroup2.append('g').selectAll('circle').data(data).join('circle')
           .attr('cx',d => x1Scale(x1Value(d))).attr('cy',d => x2Scale(x2Value(d))).attr('r',3)
           .attr("fill", d=>color(d))
@@ -178,6 +186,8 @@ The right graph shows the data values after {{rd}} .</p>
       	  c = new Array(data.length); 
 	  for(i=0;i<data.length;i++) {c[i]=0;}
 	  
+		//for the explication(SHAP) space
+		 
           yScale.domain([1.1*sa2,1.1*sb2]).range([0, innerHeight]);
           xScale.domain([1.1*sa1,1.1*sb1]).range([0, innerWidth*2/5]);   
         
@@ -204,7 +214,6 @@ The right graph shows the data values after {{rd}} .</p>
 		.attr('text-anchor', 'middle')
 		.attr('fill', 'black');
 		
-	
 	 const myCircle1 = mainGroup1.append('g').selectAll('circle').data(data).join('circle')
           .attr('cx',d => xScale(xValue(d))).attr('cy',d => yScale(yValue(d))).attr('r',3)
           .attr("fill", d=>color(d))
@@ -212,16 +221,14 @@ The right graph shows the data values after {{rd}} .</p>
         ;
         
         
+        
+        //add a brush in the explication space, which blacked out the points selected, and blacked out the corresponding points in the variable space
        mainGroup1
 	      .call( d3.brush()                   
         			.extent( [ [0,0], [width/2,height] ] )     
         			.on("start end", updateChart)
       		)   
 	
-	
-	document.getElementById("kmeans_skope").style.visibility= "hidden "; 
-	document.getElementById("dbscan_skope").style.visibility= "hidden "; 
-
 
 	function updateChart() {  
 		const selection = d3.brushSelection(this)
@@ -233,7 +240,6 @@ The right graph shows the data values after {{rd}} .</p>
 			}
 			else{c[i]=0}
 		}
-			
 		myCircle1.attr('fill',function(d,i){return isBrushed(selection, xScale(xValue(d)), yScale(yValue(d)))? 'black': color(d)})
 		myCircle2.attr('fill',function(d,i){return isBrushed(selection, xScale(xValue(d)), yScale(yValue(d)))? 'black': color(d)})
 	}
@@ -249,25 +255,29 @@ The right graph shows the data values after {{rd}} .</p>
 	}
       })
       	
+      	
+      	//we need to do kmeans(dbscan) before kmeans_skope(dbscan_skope)	
+	document.getElementById("kmeans_skope").style.visibility= "hidden "; 
+	document.getElementById("dbscan_skope").style.visibility= "hidden "; 
+
+
+      	//function of the button "skope-rules"
        function btn(){
        			d3.select("#kmeans").remove()
 				d3.select('#dbscan').remove()
-       		        var d=c.toString()	
+       		        var d=c.toString()	//a 0-1 array of size Datalength, means if a point is selected or not 
        			$.ajax({
 	       			type:"POST",
 	       			url:"/run",
-	       			data:{"ids": d,
-	       			      "haha": 0
+	       			data:{"ids": d
 	       			      },
 	       			success: function(data){  
-	       			      if(data =='0'){
-
+	       			      if(data =='0'){// =='0' means no points chosen
 		       			       alert("please choose some points");
 		       			       }
 		       		      else{
-						d3.select("#textskope").remove()
-		       		      console.log(data)
-		       		      showresultskope(data)
+						d3.select("#textskope").remove() //remove the previous result
+		       		      showresultskope(data)	//show the result of skope-rules
 		       		      }
 		       			      }
        			})
@@ -275,23 +285,21 @@ The right graph shows the data values after {{rd}} .</p>
       
 
       function showresultskope(data){
-      		
-      
       		rule=data.rule
       		var textskope = svg.append('g').attr('id','textskope')
       		.attr('transform', `translate(${margin.left}, 50)`)
-      		textskope.append('text').text("Number of points: "+data.nop+" Average prediction: "+data.avp)
+      		textskope.append('text').text("Nb of points selected: "+data.nop+"   Average prediction: "+data.avp)
       		textskope.append('text').attr('y',14).text("Rule: "+rule.rule)
-      		textskope.append('text').attr('y',28).text('precision: '+rule.precision+" recall: "+rule.recall )
-    
-    		textskope.append('text').attr('y',60).text("Nb of points triggered by the rule: "+data.pfr+" Average prediction of these points: "+data.avpr)	
+      		textskope.append('text').attr('y',28).text('  precision: '+rule.precision+" recall: "+rule.recall )    
+    		textskope.append('text').attr('y',60).text("Nb of points triggered by the rule: "+data.pfr+"   Average prediction of these points: "+data.avpr)	
       }
+      
       
 	 function kmeansbtn(){
 	  	d3.select("#choosebyhand").remove()
 		d3.select('#dbscan').remove()
 	 
-	 	NoC=document.form1.ncl.value
+	 	NoC=document.form1.ncl.value//number of clusters   
 	 	if(NoC==null){alert("please enter an integer")}		
 	        NoC = parseInt(NoC)
 	        if(NoC<=0){alert("please enter an integer")}		
@@ -303,22 +311,22 @@ The right graph shows the data values after {{rd}} .</p>
 			success: function(data){  
 					labelcluster = data.slice(start=1,end=-1).split(",")
 					for(i=0;i<labelcluster.length;i++){labelcluster[i]=parseInt(labelcluster[i])}
-					COLOR_kmeans(NoC,labelcluster)
-					document.getElementById("kmeans_skope").style.visibility= "visible"; 
+					COLOR_cluster(NoC,labelcluster)
+					document.getElementById("kmeans_skope").style.visibility= "visible"; //show the button of skope
 					
 					Labelcluster = labelcluster
 					N_CLUSTER = NoC
 	       			      }
        	})
 	}
-	var Labelcluster = new Array()
+	var Labelcluster = new Array()//an array to store the result of kmeans/dbscan
 	var N_CLUSTER = 0
 	
-
-	
-	function COLOR_kmeans(N,labelcluster){
+	//change the colors of all points according to the result of kmeans/dbscan
+	function COLOR_cluster(N,labelcluster){
 		
 		mainGroup1.select('#legend').remove()
+		
 		var color1= d3.rgb(255,0,0)
 		var color2= d3.rgb(0,255,255)
 		var compute = d3.interpolate(color1,color2)
@@ -328,9 +336,9 @@ The right graph shows the data values after {{rd}} .</p>
 		mainGroup1.selectAll('circle').attr('fill',function(d,i){return compute(colorScale(labelcluster[i]))})
 		mainGroup2.selectAll('circle').attr('fill',function(d,i){return compute(colorScale(labelcluster[i]))})
 		
+		//add legend
 		var legend = mainGroup1.append('g').attr('id','legend')
 		var size = innerWidth/(N) *2/5
-
 		for(i=0;i<N;i++){      
 		legend.append('circle').attr('cx',i*size).attr('cy',0).attr('r',20)
 		.attr('fill',compute(colorScale(i)))
@@ -338,20 +346,18 @@ The right graph shows the data values after {{rd}} .</p>
 		legend.append('text').attr('dx',i*size).text(i).attr('fill','black')
 		}
 	}
-	
-	function kmeansskope(j){
+	// Skope(0) for skope-rules after kmeans. Skope(1) for skope-rules after dbscan
+	function Skope(j){
 		if(j==0)
 		 	{n=document.form2.clusterchosen.value}
 		if(j==1)
 			{n=document.form4.clusterchosen2.value}
-//		console.log(n)	
-//		console.log(N_CLUSTER)
-//		console.log(Labelcluster)
+		//n is the index of cluster chosen
  		if(n==null){alert("please choose a cluster")}		
 		n = parseInt(n)
 		if(n<0){alert("please choose a legal cluster")}
 		if(n>=N_CLUSTER){alert("please choose a legal cluster")}
-		
+		//construct a 0-1 array of size Datalength, 1 means that point is in the cluster chosen
 		newlabel = new Array(Datalength)
 		for(i=0;i<Datalength;i++){
 			newlabel[i]=0
@@ -362,8 +368,7 @@ The right graph shows the data values after {{rd}} .</p>
 		$.ajax({
        			type:"POST",
        			url:"/run",
-       			data:{"ids": str,
-       			      "haha": 0
+       			data:{"ids": str
        			      },
        			success: function(data){  
        			      if(data =='0'){
@@ -371,7 +376,6 @@ The right graph shows the data values after {{rd}} .</p>
 	       			       }
 	       		      else{
 					d3.select("#textskope").remove()
-	       		      console.log(data)
 	       		      showresultskope(data)
 	       		      }
 	       			      }
@@ -399,13 +403,10 @@ The right graph shows the data values after {{rd}} .</p>
 				"M": M
 			      },
 			success: function(data){  
-	//			console.log(data.label)
-	//			console.log(data.numberofcluster)
 					NoC = parseInt(data.numberofcluster)
 					labelcluster = data.label.slice(start=1,end=-1).split(",")
 					for(i=0;i<labelcluster.length;i++){labelcluster[i]=parseInt(labelcluster[i])}
-		
-					COLOR_kmeans(NoC,labelcluster)
+					COLOR_cluster(NoC,labelcluster)
 					document.getElementById("dbscan_skope").style.visibility= "visible"; 
 					Labelcluster = labelcluster
 					N_CLUSTER = NoC
