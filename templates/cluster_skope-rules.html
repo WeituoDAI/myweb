@@ -14,8 +14,6 @@
   
 
 <p>
-Here is a dataset banknote.csv. we use xgboost as the model and calculate the shap values.</p>
-<p>
 The left graph shows the shap values after {{rd}} .
 The right graph shows the data values after {{rd}} .</p>
 
@@ -30,8 +28,11 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
 <div id="choosebyhand">
 	1.Please choose some points by hand in the left graph
 	<button type="submit" id="btn" onclick = "btn()" >Skope-rules</button>
+  
+   	<button type="submit" id="showpoint" onclick = "showpoint()" >Show</button>
+   	<button type="submit" id="notshowpoint" onclick = "notshowpoint()" >NotShow</button>
 </div>
-   
+
 <br>
 
 
@@ -43,7 +44,11 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
     <form id="kmeans_skope" name ="form2" onsubmit="return false" action="##" method="post">
     	choose one cluster to skope-rule: <input type="text" name="clusterchosen">
         <input type="button" value="Skope-rules" onclick="Skope(0)" value ="skope">
+
+
     </form>
+	<button type="submit" id="showpoint1" onclick = "showpoint1(1)" >Show</button>
+	<button type="submit" id="notshowpoint1" onclick = "notshowpoint1(1)" >NotShow</button>
 </div>
 
 
@@ -61,7 +66,13 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
     	choose one cluster to skope-rule: <input type="text" name="clusterchosen2">
         <input type="button" value="Skope-rules" onclick="Skope(1)" value ="skope">
     </form>
+	<button type="submit" id="showpoint2" onclick = "showpoint1(2)" >Show</button>
+	<button type="submit" id="notshowpoint2" onclick = "notshowpoint1(2)" >NotShow</button>
 </div>
+
+
+
+
 
 
 <br>
@@ -126,6 +137,7 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
 	var Datalength=0
       
 	var c = new Array();//for later use
+	var cc = new Array();
     
       d3.csv('{{filename}}').then(data => {
           // calculationg scales:   
@@ -204,7 +216,10 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
       
       
       	  c = new Array(data.length); 
-	  for(i=0;i<data.length;i++) {c[i]=0;}
+	  for(i=0;i<Datalength;i++) {c[i]=0;}
+	  cc = new Array(data.length)
+  	  for(i=0;i<Datalength;i++) {cc[i]=0;}
+	  
 	  
 		//for the explication(SHAP) space
 		 
@@ -246,7 +261,7 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
        mainGroup1
 	      .call( d3.brush()                   
         			.extent( [ [0,0], [width/2,height] ] )     
-        			.on("start end", updateChart)
+        			.on("end", updateChart)
       		)   
 	
 
@@ -282,12 +297,22 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
 	document.getElementById("dbscan_skope").style.visibility= "hidden "; 
 	document.getElementById("XGBLOCAL").style.visibility= "hidden "; 
 
+	document.getElementById("showpoint").setAttribute("disabled", true);
+	document.getElementById("notshowpoint").setAttribute("disabled", true);
+
+	document.getElementById("showpoint1").setAttribute("disabled", true);
+	document.getElementById("notshowpoint1").setAttribute("disabled", true);
+
+	document.getElementById("showpoint2").setAttribute("disabled", true);
+	document.getElementById("notshowpoint2").setAttribute("disabled", true);
 
 
       	//function of the button "skope-rules"
        function btn(){
        			document.getElementById("formkmeans").style.visibility= "hidden ";
 				document.getElementById("formdbscan").style.visibility= "hidden ";
+				
+
        		        var d=c.toString()	//a 0-1 array of size Datalength, means if a point is selected or not 
        			$.ajax({
 	       			type:"POST",
@@ -302,11 +327,19 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
 		      		            	document.getElementById("goback").style.visibility= "visible"; 
 						d3.select("#textskope").remove() //remove the previous result
 		       		      showresultskope(data)	//show the result of skope-rules
+		       		      document.getElementById("showpoint").removeAttribute("disabled");
+		       		      cc = parsearray(data.pf)
 		       		      }
 		       			      }
        			})
        		}	
-      
+	function parsearray(str){
+		myarray=str.split(',')
+		for (i=0;i<myarray.length;i++){
+		myarray[i]=parseInt(myarray[i])
+		}
+		return myarray
+	}      
 
       function showresultskope(data){
 	      	document.getElementById("xgblocal1").style.visibility= "visible"; 
@@ -375,7 +408,7 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
 		var legend = mainGroup1.append('g').attr('id','legend')
 		var size = innerWidth/(N) *2/5
 		for(i=0;i<N;i++){      
-		legend.append('circle').attr('cx',i*size).attr('cy',0).attr('r',20)
+		legend.append('rect').attr('x',i*size).attr('y',0).attr('height',20).attr('width',20)
 		.attr('fill',compute(colorScale(i)))
 		
 		legend.append('text').attr('dx',i*size).text(i).attr('fill','black')
@@ -384,9 +417,12 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
 	// Skope(0) for skope-rules after kmeans. Skope(1) for skope-rules after dbscan
 	function Skope(j){
 		if(j==0)
-		 	{n=document.form2.clusterchosen.value}
+		 	{n=document.form2.clusterchosen.value
+		      document.getElementById("showpoint1").removeAttribute("disabled");
+		 	}
 		if(j==1)
-			{n=document.form4.clusterchosen2.value}
+			{n=document.form4.clusterchosen2.value
+	    		  document.getElementById("showpoint2").removeAttribute("disabled");}
 		//n is the index of cluster chosen
  		if(n==null){alert("please choose a cluster")}		
 		n = parseInt(n)
@@ -411,10 +447,14 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
 	       			       }
 	       		      else{
 					d3.select("#textskope").remove()
-	       		      showresultskope(data)
+	       		      	showresultskope(data)
+	       		        cc = parsearray(data.pf)
 	       		      }
 	       			      }
 		})	
+
+		
+
 	}
 	
 	function dbscanbtn(){
@@ -462,6 +502,14 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
 		document.getElementById("xgblocal2").style.visibility= "hidden"; 
 		document.getElementById("xgblocal3").style.visibility= "hidden"; 
 		document.getElementById("xgblocal4").style.visibility= "hidden"; 
+		document.getElementById("showpoint").setAttribute("disabled", true);
+		document.getElementById("notshowpoint").setAttribute("disabled", true);
+			
+		document.getElementById("showpoint1").setAttribute("disabled", true);
+		document.getElementById("notshowpoint1").setAttribute("disabled", true);
+		
+		document.getElementById("showpoint2").setAttribute("disabled", true);
+		document.getElementById("notshowpoint2").setAttribute("disabled", true);
 
 		d3.select('#legend').remove()
 		d3.select("#textskope").remove()
@@ -500,11 +548,35 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
 		
 		}
 		
+	function showpoint(){
+		document.getElementById("showpoint").setAttribute("disabled", true);
+      	      	document.getElementById("notshowpoint").removeAttribute("disabled");
+		mainGroup1.selectAll('circle').attr('fill',function(d,i){if (cc[i]==1) {return 'yellow'} else return color(d)})
+		mainGroup2.selectAll('circle').attr('fill',function(d,i){if (cc[i]==1) {return 'yellow'} else return color(d)})
+	}
+	function notshowpoint(){
+		document.getElementById("notshowpoint").setAttribute("disabled", true);
+      	      	document.getElementById("showpoint").removeAttribute("disabled");
+		mainGroup1.selectAll('circle').attr('fill',function(d,i){if (c[i]==1) {return 'black'} else return color(d)})
+		mainGroup2.selectAll('circle').attr('fill',function(d,i){if (c[i]==1) {return 'black'} else return color(d)})
+	}
 	
+		
+	function showpoint1(j){
+		document.getElementById("showpoint"+j).setAttribute("disabled", true);
+      	      	document.getElementById("notshowpoint"+j).removeAttribute("disabled");
+		mainGroup1.selectAll('circle').attr('fill',function(d,i){if (cc[i]==1) {return 'yellow'} else return color(d)})
+		mainGroup2.selectAll('circle').attr('fill',function(d,i){if (cc[i]==1) {return 'yellow'} else return color(d)})
+	}
+	function notshowpoint1(j){
+		document.getElementById("notshowpoint"+j).setAttribute("disabled", true);
+      	      	document.getElementById("showpoint"+j).removeAttribute("disabled");
+		COLOR_cluster(N_CLUSTER,Labelcluster)
+	}
+	
+	
+		
 
-	
-	
-	
 </script> 
 
   

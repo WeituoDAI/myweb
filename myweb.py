@@ -49,7 +49,6 @@ def umap():
 		Myfun_umap()
 		session['rd']='umap'
 		session['filename']="static/data_umap.csv"
-		Myfun_umap()
 		return render_template("cluster_skope-rules.html", filename =session['filename'],rd=session['rd'])
 	return render_template("index.html")
 
@@ -62,9 +61,8 @@ def run():
 		session['number']=sum(b)
 		x = Myfun_skope(b)
 		session['pf']=str(x[5])[1:-1]
-
-	return {'rule':x[0],'nop':x[1],'avp':x[2],'pfr':x[3],'avpr':x[4]}
-
+	return {'rule':x[0],'nop':x[1],'avp':x[2],'pfr':x[3],'avpr':x[4],'pf':session['pf']}
+	
 @app.route('/kmeans',methods=['POST'])
 def kmeans():
 	a = request.form.get("n")
