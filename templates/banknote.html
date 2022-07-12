@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang='en'>
+
+
+
+<head>
+    <meta charset="UTF-8">
+  <title>TEST</title>
+
+</head>
+
+<body>
+
+  
+     
+
+
+
+<p>
+Here is a dataset banknote.csv. we use xgboost as the model and calculate the shap values.</p>
+
+<img src="static/banknote/banknote1.png">
+
+
+
+
+
+<p>
+In order to visualise the data, please choose one method to reduce the dimensions
+</p>
+
+
+	<form action="/tsne" method ='post'>	
+    	<input type="submit" id ="tsne" value="t-SNE" />
+	</form>
+	
+	
+	
+	<form action="/pca" method ='post'>	
+    	<input type="submit" id ="PCA" value="PCA" />
+	</form>
+	
+	
+	
+	
+	<form action="/umap" method ='post'>	
+    	<input type="submit" id ="UMAP" value="UMap" />
+	</form>
+	
+	
+
+  
+</body>
+
+</html>
+
+
+

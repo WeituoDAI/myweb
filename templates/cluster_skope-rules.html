@@ -114,12 +114,27 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
       
       const mainGroup2 = svg.append('g')
       .attr('transform', `translate(${margin.left+innerWidth*3/5},${margin.top})`)
-      
+      var low = Infinity
+      var high =-Infinity
       
       const xValue = (d => d.shap0);
       const yValue = (d => d.shap1);
-      function color(d){return d.label==0 ? 'red':'green';}
       
+      //give colorfunction of problem classification and problem regression
+      if('{{pb}}'=='classification'){ 
+		function color(d){return d.label==0 ? 'red':'green';}}
+      else if ('{{pb}}'=='regression'){
+		function color(d){
+      			  
+		      var Color1 = d3.rgb(0,255,0)
+		      var Color2 = d3.rgb(0,0,255)
+		      var Compute = d3.interpolate(Color1,Color2)
+		      const Colorscale = d3.scaleLinear();
+		      Colorscale.domain([low,high]).range([0,1]);
+		      return Compute(Colorscale(d.label))
+		      
+	      	}
+      }
       
       const xScale = d3.scaleLinear();
       const yScale = d3.scaleLinear();
@@ -138,12 +153,24 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
       
 	var c = new Array();//for later use
 	var cc = new Array();
+  
+  	
     
       d3.csv('{{filename}}').then(data => {
-          // calculationg scales:   
+          // calculationg scales:  
+           
+	  Datalength=data.length; 
+	  
+	//if this is a regression problem, need the params of the color function
+  	if('{{pb}}'=='regression'){
+  		for(i=0;i<Datalength;i++){
+  			x = parseFloat(data[i].label)
+  			if(x<low)		low = x
+  			else if (x>high)	high =x
+  		}
+  	}
          
-          Datalength=data.length;
-                  
+                
           let a1=Infinity
           let a2=Infinity
           let b1=-Infinity
@@ -159,6 +186,7 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
           	let x2=parseFloat(x2Value(data[i]))
           	let s1=parseFloat(xValue(data[i]))
           	let s2=parseFloat(yValue(data[i]))
+          	
           	if (x1<a1){
           		a1 = x1}
           	else if (x1>b1)
@@ -257,12 +285,11 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
         
         
         
-        //add a brush in the explication space, which blacked out the points selected, and blacked out the corresponding points in the variable space
+	//add a brush in the explication space, which blacked out the points selected, and blacked out the corresponding points in the variable space
        mainGroup1
-	      .call( d3.brush()                   
-        			.extent( [ [0,0], [width/2,height] ] )     
+	      .call( d3.brush().extent( [ [0,0], [width/2,height] ] )     
         			.on("end", updateChart)
-      		)   
+      			)   
 	
 
 	function updateChart() {  
@@ -333,6 +360,7 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
 		       			      }
        			})
        		}	
+       		
 	function parsearray(str){
 		myarray=str.split(',')
 		for (i=0;i<myarray.length;i++){
@@ -452,9 +480,6 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
 	       		      }
 	       			      }
 		})	
-
-		
-
 	}
 	
 	function dbscanbtn(){
@@ -469,7 +494,7 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
 	 	if(M==null){alert("please give legal M value")}			
 	        M = parseInt(M)
 	        if(M<=0){alert("please give legal M value")}
-	        epsilon = parseInt(epsilon)
+	        epsilon = parseFloat(epsilon)
 	        if(epsilon<0){alert("please give legal epsilon value")}	
 	      	
 	 	$.ajax({
@@ -488,8 +513,8 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
 					N_CLUSTER = NoC
 	       			}
        	})
-		
 	}
+	
 	function goback(){
 		
 		document.getElementById("formkmeans").style.visibility= "visible";
@@ -516,16 +541,13 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
 		
 		mainGroup1.selectAll('circle').attr('fill',d=>color(d))
 		mainGroup2.selectAll('circle').attr('fill',d=>color(d))
-		
 	}
-	
 	
 	function xgblocal(j){
 		str = c.toString()
 		J = j.toString()
 
 		document.getElementById("xgblocal"+J).setAttribute("disabled", true);
-
 
 		$.ajax({
        			type:"POST",
@@ -544,8 +566,7 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
 					d3.select('#textskope')
 					.append('text').attr('y',75+15*k).text(TEXT).attr('fill','black')
 					}
-			})		
-		
+			})				
 		}
 		
 	function showpoint(){

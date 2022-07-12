@@ -15,38 +15,22 @@
      
 
 
-
 <p>
-Here is a dataset banknote.csv. we use xgboost as the model and calculate the shap values.</p>
-
-<img src="static/banknote1.png">
-
-<img src="static/banknote2.png">
-
-
-
-<p>
-In order to visualise the data, please choose one method to reduce the dimensions
+Please choose a dataset
 </p>
 
 
-	<form action="/tsne" method ='post'>	
-    	<input type="submit" id ="tsne" value="t-SNE" />
+	<form action="/banknote" method ='post'>	
+    	<input type="submit" id ="banknote" value="banknote.csv" />
 	</form>
-	
-	
-	
-	<form action="/pca" method ='post'>	
-    	<input type="submit" id ="PCA" value="PCA" />
+		(1372  5)	Classification
+
+	<br>
+
+	<form action="/house" method ='post'>	
+    	<input type="submit" id ="house" value="house.csv" />
 	</form>
-	
-	
-	
-	
-	<form action="/umap" method ='post'>	
-    	<input type="submit" id ="UMAP" value="UMap" />
-	</form>
-	
+		(20640  9)	Regression
 	
 
   
