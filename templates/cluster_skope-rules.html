@@ -120,16 +120,16 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
       const xValue = (d => d.shap0);
       const yValue = (d => d.shap1);
       
+      
+      var Color1 = d3.rgb(0,255,0)
+      var Color2 = d3.rgb(0,0,255)
+      var Compute = d3.interpolate(Color1,Color2)
+      const Colorscale = d3.scaleLinear();
       //give colorfunction of problem classification and problem regression
       if('{{pb}}'=='classification'){ 
 		function color(d){return d.label==0 ? 'red':'green';}}
       else if ('{{pb}}'=='regression'){
 		function color(d){
-      			  
-		      var Color1 = d3.rgb(0,255,0)
-		      var Color2 = d3.rgb(0,0,255)
-		      var Compute = d3.interpolate(Color1,Color2)
-		      const Colorscale = d3.scaleLinear();
 		      Colorscale.domain([low,high]).range([0,1]);
 		      return Compute(Colorscale(d.label))
 		      
@@ -168,6 +168,31 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
   			if(x<low)		low = x
   			else if (x>high)	high =x
   		}
+
+		const defs = mainGroup1.append("defs"); 
+		const linearGradient = defs 
+		    .append("linearGradient")
+		    .attr("id", "gradient"); 
+		linearGradient 
+		    .append("stop")
+		    .attr("offset", "0%") 
+		    .attr("stop-color", Compute(Colorscale(high)));
+		linearGradient
+		    .append("stop")
+		    .attr("offset", "100%")
+		    .attr("stop-color", Compute(Colorscale(low)));
+		const RECT= mainGroup1.append('g').attr('transform',`translate(${innerWidth*2/5},0)`)
+		const rect =RECT.append("rect").attr('id','myrect')
+		    .attr("height", "20")
+		    .attr("width", innerWidth*2/5)
+		    .attr('transform',`rotate(90)`)		
+		    .style("fill", "url('#gradient')")
+		
+		RECT.append('text').text(high).attr('fill','black').attr('dy',10)
+		RECT.append('text').text(low).attr('fill','black').attr('dy',innerWidth*2/5)
+
+
+  		
   	}
          
                 
