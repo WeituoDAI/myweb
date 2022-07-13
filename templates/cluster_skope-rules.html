@@ -127,7 +127,7 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
       const Colorscale = d3.scaleLinear();
       //give colorfunction of problem classification and problem regression
       if('{{pb}}'=='classification'){ 
-		function color(d){return d.label==0 ? 'red':'green';}}
+		function color(d){return d.label==1 ? 'red':'green';}}
       else if ('{{pb}}'=='regression'){
 		function color(d){
 		      Colorscale.domain([low,high]).range([0,1]);
@@ -162,6 +162,8 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
 	  Datalength=data.length; 
 	  
 	//if this is a regression problem, need the params of the color function
+	
+	const RECT= mainGroup1.append('g').attr('transform',`translate(${innerWidth*2/5+20},0)`)
   	if('{{pb}}'=='regression'){
   		for(i=0;i<Datalength;i++){
   			x = parseFloat(data[i].label)
@@ -189,12 +191,27 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
 		    .style("fill", "url('#gradient')")
 		
 		RECT.append('text').text(high).attr('fill','black').attr('dy',10)
-		RECT.append('text').text(low).attr('fill','black').attr('dy',innerWidth*2/5)
-
-
-  		
+		RECT.append('text').text(low).attr('fill','black').attr('dy',innerWidth*2/5)	
   	}
-         
+        else{
+        	RECT.append("rect")
+		    .attr("height", "20")
+		    .attr("width", innerWidth*1/5)
+		    .attr('transform',`rotate(90)`)		
+		    .style("fill", 'red')
+		RECT.append("rect")
+		    .attr("height", "20")
+		    .attr("width", innerWidth*1/5)
+		    .attr('x',innerWidth*1/5)
+		    .attr('transform',`rotate(90)`)		
+		    .style("fill", 'green')
+		        
+		
+		
+		RECT.append('text').text(1).attr('fill','black').attr('dy',10)
+		RECT.append('text').text(0).attr('fill','black').attr('dy',innerWidth*2/5)	
+        
+        }
                 
           let a1=Infinity
           let a2=Infinity
