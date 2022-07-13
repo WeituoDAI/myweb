@@ -370,14 +370,7 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
 	}      
 
       function showresultskope(data){
-	      	document.getElementById("xgblocal1").style.visibility= "visible"; 
-	      	document.getElementById("xgblocal2").style.visibility= "visible"; 
-	      	document.getElementById("xgblocal3").style.visibility= "visible"; 
-      	      	document.getElementById("xgblocal4").style.visibility= "visible"; 
-      	      	document.getElementById("xgblocal1").removeAttribute("disabled");
-      	      	document.getElementById("xgblocal2").removeAttribute("disabled");
-      	      	document.getElementById("xgblocal3").removeAttribute("disabled");
-      	      	document.getElementById("xgblocal4").removeAttribute("disabled");
+
       	      	      	      	
       		rule=data.rule
       		var textskope = svg.append('g').attr('id','textskope')
@@ -386,6 +379,28 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
       		textskope.append('text').attr('y',14).text("Rule: "+rule.rule)
       		textskope.append('text').attr('y',28).text('  precision: '+rule.precision+" recall: "+rule.recall )    
     		textskope.append('text').attr('y',60).text("Nb of points triggered by the rule: "+data.pfr+"   Average prediction of these points: "+data.avpr)	
+    		
+    		
+    		document.getElementById("xgblocal1").style.visibility= "visible"; 
+	      	document.getElementById("xgblocal2").style.visibility= "visible"; 
+	      	document.getElementById("xgblocal3").style.visibility= "visible"; 
+      	      	document.getElementById("xgblocal4").style.visibility= "visible"; 
+      	      	document.getElementById("xgblocal1").removeAttribute("disabled");
+      	      	document.getElementById("xgblocal2").removeAttribute("disabled");
+      	      	document.getElementById("xgblocal3").removeAttribute("disabled");
+      	      	document.getElementById("xgblocal4").removeAttribute("disabled");
+    		
+    		if(parseFloat(data.avpr)==1){
+			document.getElementById("xgblocal3").setAttribute("disabled", true);
+			document.getElementById("xgblocal4").setAttribute("disabled", true);
+    		}
+ 		if(parseFloat(data.avp)==1){
+			document.getElementById("xgblocal1").setAttribute("disabled", true);
+			document.getElementById("xgblocal2").setAttribute("disabled", true);
+    		}
+    		
+    		
+    		
       }
       
       

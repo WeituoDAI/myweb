@@ -194,7 +194,8 @@ def Myfun_xgb(a,J,filename,original_filename,pb):
 	c = sorted(z.items(),key = lambda d:d[1],reverse =True)
 	d = {}
 	for i in range(len(c)):
-    		d[c[i][0]]=round(float(c[i][1]),3)
+		if c[i][1]>0.05:
+	    		d[c[i][0]]=round(float(c[i][1]),3)
 	return 'Feature Importances: '+ str(d)
 	
 
