@@ -43,12 +43,13 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
     </form>
     <form id="kmeans_skope" name ="form2" onsubmit="return false" action="##" method="post">
     	choose one cluster to skope-rule: <input type="text" name="clusterchosen">
-        <input type="button" value="Skope-rules" onclick="Skope(0)" value ="skope">
+        <input type="button" value="Skope-rules" onclick="Skope(1)" value ="skope">
 
 
     </form>
-	<button type="submit" id="showpoint1" onclick = "showpoint1(1)" >Show</button>
-	<button type="submit" id="notshowpoint1" onclick = "notshowpoint1(1)" >NotShow</button>
+        <button type="submit" id="returncluster" onclick = "returncluster(1)">return to result of kmeans</button>
+	<button type="submit" id="showpoint1" onclick = "showpoint()" >Show</button>
+	<button type="submit" id="notshowpoint1" onclick = "notshowpoint()" >NotShow</button>
 </div>
 
 
@@ -64,10 +65,11 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
     </form>
     <form id="dbscan_skope" name ="form4" onsubmit="return false" action="##" method="post">
     	choose one cluster to skope-rule: <input type="text" name="clusterchosen2">
-        <input type="button" value="Skope-rules" onclick="Skope(1)" value ="skope">
+        <input type="button" value="Skope-rules" onclick="Skope(2)" value ="skope">
     </form>
-	<button type="submit" id="showpoint2" onclick = "showpoint1(2)" >Show</button>
-	<button type="submit" id="notshowpoint2" onclick = "notshowpoint1(2)" >NotShow</button>
+    	<button type="submit" id="returncluster2" onclick = "returncluster(2)">return to result of dbscan</button>
+	<button type="submit" id="showpoint2" onclick = "showpoint()" >Show</button>
+	<button type="submit" id="notshowpoint2" onclick = "notshowpoint()" >NotShow</button>
 </div>
 
 
@@ -100,8 +102,6 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
   
 <script>
 	
-	
-
       // The following code is the typical routine of my d3.js code. 
       const svg = d3.select('svg');
       const width = svg.attr('width');
@@ -110,61 +110,84 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
       const innerWidth = width - margin.left - margin.right;
       const innerHeight = height - margin.top - margin.bottom;
       const mainGroup1 = svg.append('g')
-      .attr('transform', `translate(${margin.left}, ${margin.top})`)
-      
+      .attr('transform', `translate(${margin.left}, ${margin.top})`) 
       const mainGroup2 = svg.append('g')
       .attr('transform', `translate(${margin.left+innerWidth*3/5},${margin.top})`)
-      var low = Infinity
-      var high =-Infinity
-      
+    
+    // axis x,y  for 2 graphs
       const xValue = (d => d.shap0);
       const yValue = (d => d.shap1);
-      
-      
-      var Color1 = d3.rgb(255,0,0)
-      var Color2 = d3.rgb(0,0,255)
-      var Compute = d3.interpolate(Color1,Color2)
-      const Colorscale = d3.scaleLinear();
-      //give colorfunction of problem classification and problem regression
-      if('{{pb}}'=='classification'){ 
-		function color(d){return d.label==1 ? 'red':'green';}}
-      else if ('{{pb}}'=='regression'){
-		function color(d){
-		      Colorscale.domain([low,high]).range([0,1]);
-		      return Compute(Colorscale(d.label))
-		      
-	      	}
-      }
-      
       const xScale = d3.scaleLinear();
       const yScale = d3.scaleLinear();
-
       const x1Value= d => d.x0;
       const x2Value= d => d.x1;
       const x1Scale = d3.scaleLinear();
       const x2Scale = d3.scaleLinear();
+      
+      
+      //for treating the color (target value)
+      var low = Infinity
+      var high =-Infinity   
+      var Color1 = d3.rgb(255,0,0)
+      var Color2 = d3.rgb(0,0,255)
+      var Compute = d3.interpolate(Color2,Color1)
+      const Colorscale = d3.scaleLinear();
+      //give colorfunction of problem classification and problem regression
+      if('{{pb}}'=='classification'){ 
+		function color(d){return d.label==1 ? 'red':'blue';}}
+      else if ('{{pb}}'=='regression'){
+		function color(d){
+		      Colorscale.domain([low,high]).range([0,1]);
+		      return Compute(Colorscale(d.label))	      
+	      	}
+      }
 
-      /* 
-        Loading data and preprocessing data. 
-        Note that you can also preprocessing data in your own way using your prefered language, e.g., Python. 
-      */
       
-	var Datalength=0
-      
-	var c = new Array();//for later use
-	var cc = new Array();
-  
-  	
     
+	var Datalength=0
+	var c = new Array();//for later use	//array to store the points selected(by the brush)
+	var cc = new Array();//for later use	//array to store the points triggered by the rule(result of skope-rule)
+	var Labelcluster = new Array()//an array to store the result of kmeans/dbscan
+	var N_CLUSTER = 0// number of clusters (result of kmeans or dbscan)
+	
+
+	//the begining state of all buttons (form)
+      	document.getElementById("goback").style.visibility= "hidden "; 
+	document.getElementById("kmeans_skope").style.visibility= "hidden "; 
+	document.getElementById("dbscan_skope").style.visibility= "hidden "; 
+	document.getElementById("XGBLOCAL").style.visibility= "hidden "; 
+
+	document.getElementById("showpoint").setAttribute("disabled", true);
+	document.getElementById("notshowpoint").setAttribute("disabled", true);
+
+	document.getElementById("showpoint1").setAttribute("disabled", true);
+	document.getElementById("notshowpoint1").setAttribute("disabled", true);
+
+	document.getElementById("showpoint2").setAttribute("disabled", true);
+	document.getElementById("notshowpoint2").setAttribute("disabled", true);
+
+	document.getElementById("returncluster").setAttribute("disabled", true);
+	document.getElementById("returncluster2").setAttribute("disabled", true);
+
+
+
+
+
+
+      //  Loading data and preprocessing data. 
       d3.csv('{{filename}}').then(data => {
           // calculationg scales:  
            
 	  Datalength=data.length; 
 	  
-	//if this is a regression problem, need the params of the color function
+
 	
-	const RECT= mainGroup1.append('g').attr('transform',`translate(${innerWidth*2/5+20},0)`)
+	
+	//draw the color band (to show the target value)	
+	const RECT= mainGroup1.append('g').attr('transform',`translate(${innerWidth*1/2},0)`)
   	if('{{pb}}'=='regression'){
+ 
+  		//if this is a regression problem, need the params of the color function
   		for(i=0;i<Datalength;i++){
   			x = parseFloat(data[i].label)
   			if(x<low)		low = x
@@ -183,7 +206,6 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
 		    .append("stop")
 		    .attr("offset", "100%")
 		    .attr("stop-color", Compute(Colorscale(low)));
-		const RECT= mainGroup1.append('g').attr('transform',`translate(${innerWidth*2/5},0)`)
 		const rect =RECT.append("rect").attr('id','myrect')
 		    .attr("height", "20")
 		    .attr("width", innerWidth*2/5)
@@ -204,15 +226,13 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
 		    .attr("width", innerWidth*1/5)
 		    .attr('x',innerWidth*1/5)
 		    .attr('transform',`rotate(90)`)		
-		    .style("fill", 'green')
-		        
-		
-		
+		    .style("fill", 'blue')
 		RECT.append('text').text(1).attr('fill','black').attr('dy',10)
 		RECT.append('text').text(0).attr('fill','black').attr('dy',innerWidth*2/5)	
-        
         }
-                
+        
+        
+        //get the range of x-axis y-axis of 2 graphs
           let a1=Infinity
           let a2=Infinity
           let b1=-Infinity
@@ -222,22 +242,22 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
           let sa2=Infinity
           let sb1=-Infinity
           let sb2=-Infinity
-          
+        
           for(i=0;i<Datalength;i++){
           	let x1=parseFloat(x1Value(data[i]))
           	let x2=parseFloat(x2Value(data[i]))
           	let s1=parseFloat(xValue(data[i]))
           	let s2=parseFloat(yValue(data[i]))
           	
-          	if (x1<a1){
-          		a1 = x1}
+          	if (x1<a1)
+        		{a1 = x1}
           	else if (x1>b1)
           		{b1=x1}
           	if (x2<a2)
           		{a2 =x2}
           	else if (x2>b2)
           		{b2=x2}
-          	
+        
           	if (s1<sa1)
           		{sa1 = s1}
           	else if (s1>sb1)
@@ -247,18 +267,53 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
           	else if (s2>sb2)
           		{sb2=s2}         		
           }
+
+	//for the explication(SHAP) space		 
+
+   
+   
+          yScale.domain([1.1*sa2,1.1*sb2]).range([0, innerHeight]);
+          xScale.domain([1.1*sa1,1.1*sb1]).range([0, innerWidth*2/5]);   
+  
+	  // data-join for circle:  		
+	  const myCircle1 = mainGroup1.append('g').selectAll('circle').data(data).join('circle')
+	  .attr('cx',d => xScale(xValue(d))).attr('cy',d => yScale(yValue(d))).attr('r',3)
+	  .attr("fill", d=>color(d));
+		   
+          // adding axes:        
+          const xAxisMethod = d3.axisBottom(xScale);
+          const yAxisMethod = d3.axisLeft(yScale);
+ 
+          const xAxisGroup = mainGroup1.append('g').call(xAxisMethod)
+                .attr('transform', `translate(${0}, ${innerHeight})`)
+		.append('text') // ----------
+		.text('shap1')
+		.attr('font-size', '3em')
+		.attr('x', innerWidth / 5)
+		.attr('y', 50)
+		.attr('text-anchor', 'middle')
+		.attr('fill', 'black');
+				 
+          const yAxisGroup = mainGroup1.append('g').call(yAxisMethod)
+		.append('text') // ----------
+		.text('shap2')
+		.attr('font-size', '3em')
+		.attr('transform', 'rotate(-90)') // y-axis label needs an additional transform; 
+		.attr('x', -innerHeight / 2)
+		.attr('y', -50)
+		.attr('text-anchor', 'middle')
+		.attr('fill', 'black');
+                   	    
                       	    
-                      	    
-          // for the variable space
+	//for the variable space
           x2Scale.domain([1.1*a2,1.1*b2]).range([0, innerHeight]);
           x1Scale.domain([1.1*a1,1.1*b1]).range([0, innerWidth*2/5]);   
-
-          
+   
           // data-join for circle:  
           const myCircle2 = mainGroup2.append('g').selectAll('circle').data(data).join('circle')
           .attr('cx',d => x1Scale(x1Value(d))).attr('cy',d => x2Scale(x2Value(d))).attr('r',3)
-          .attr("fill", d=>color(d))
-            .attr('class',function(d,i){ return 'class'+i;})
+          .attr("fill", d=>color(d));
+
   		        
           // adding axes:       
           const x1AxisMethod = d3.axisBottom(x1Scale);
@@ -284,56 +339,20 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
 		.attr('text-anchor', 'middle')
 		.attr('fill', 'black');
       
-      
+	//array to store the points selected(by the brush)
       	  c = new Array(data.length); 
 	  for(i=0;i<Datalength;i++) {c[i]=0;}
+	//array to store the points triggered by the rule(result of skope-rule)
 	  cc = new Array(data.length)
   	  for(i=0;i<Datalength;i++) {cc[i]=0;}
-	  
-	  
-		//for the explication(SHAP) space
-		 
-          yScale.domain([1.1*sa2,1.1*sb2]).range([0, innerHeight]);
-          xScale.domain([1.1*sa1,1.1*sb1]).range([0, innerWidth*2/5]);   
-        
-          const xAxisMethod = d3.axisBottom(xScale);
-          const yAxisMethod = d3.axisLeft(yScale);
-   
-          const xAxisGroup = mainGroup1.append('g').call(xAxisMethod)
-                .attr('transform', `translate(${0}, ${innerHeight})`)
-		.append('text') // ----------
-		.text('shap1')
-		.attr('font-size', '3em')
-		.attr('x', innerWidth / 5)
-		.attr('y', 50)
-		.attr('text-anchor', 'middle')
-		.attr('fill', 'black');
-				 
-          const yAxisGroup = mainGroup1.append('g').call(yAxisMethod)
-		.append('text') // ----------
-		.text('shap2')
-		.attr('font-size', '3em')
-		.attr('transform', 'rotate(-90)') // y-axis label needs an additional transform; 
-		.attr('x', -innerHeight / 2)
-		.attr('y', -50)
-		.attr('text-anchor', 'middle')
-		.attr('fill', 'black');
-		
-	 const myCircle1 = mainGroup1.append('g').selectAll('circle').data(data).join('circle')
-          .attr('cx',d => xScale(xValue(d))).attr('cy',d => yScale(yValue(d))).attr('r',3)
-          .attr("fill", d=>color(d))
-        .attr('class',function(d,i){ return 'class'+i;})
-        ;
-        
-        
-        
+	     
 	//add a brush in the explication space, which blacked out the points selected, and blacked out the corresponding points in the variable space
        mainGroup1
 	      .call( d3.brush().extent( [ [0,0], [width/2,height] ] )     
         			.on("end", updateChart)
-      			)   
+      		   )   
 	
-
+	//function linked to the brush
 	function updateChart() {  
 		const selection = d3.brushSelection(this)
 		if (selection==null)
@@ -344,10 +363,9 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
 			}
 			else{c[i]=0}
 		}
-		myCircle1.attr('fill',function(d,i){return isBrushed(selection, xScale(xValue(d)), yScale(yValue(d)))? 'black': color(d)})
-		myCircle2.attr('fill',function(d,i){return isBrushed(selection, xScale(xValue(d)), yScale(yValue(d)))? 'black': color(d)})
+		DrawPointsSelected()
 	}
-  // A function that return TRUE or FALSE according if a dot is in the selection or not
+ 	 // A function that return TRUE or FALSE according if a dot is in the selection or not
 	function isBrushed(brush_coords, cx, cy) {
 		if (brush_coords==null)
 		return false;
@@ -357,25 +375,19 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
 		   y1 = brush_coords[1][1];
 		return x0 <= cx && cx <= x1 && y0 <= cy && cy <= y1; // This return TRUE or FALSE depending on if the points is in the selected area
 	}
+      
       })
       	
-      	
-      	//we need to do kmeans(dbscan) before kmeans_skope(dbscan_skope)	
-      	document.getElementById("goback").style.visibility= "hidden "; 
-	document.getElementById("kmeans_skope").style.visibility= "hidden "; 
-	document.getElementById("dbscan_skope").style.visibility= "hidden "; 
-	document.getElementById("XGBLOCAL").style.visibility= "hidden "; 
-
-	document.getElementById("showpoint").setAttribute("disabled", true);
-	document.getElementById("notshowpoint").setAttribute("disabled", true);
-
-	document.getElementById("showpoint1").setAttribute("disabled", true);
-	document.getElementById("notshowpoint1").setAttribute("disabled", true);
-
-	document.getElementById("showpoint2").setAttribute("disabled", true);
-	document.getElementById("notshowpoint2").setAttribute("disabled", true);
-
-
+	//draw points selected
+	function DrawPointsSelected(){
+		mainGroup1.selectAll('circle').attr('fill',function(d,i){return c[i]==1? 'black': color(d)})
+		mainGroup2.selectAll('circle').attr('fill',function(d,i){return c[i]==1? 'black': color(d)})
+	}
+	function DrawPointsSelectedByRule(){
+		mainGroup1.selectAll('circle').attr('fill',function(d,i){return cc[i]==1? 'yellow': color(d)})
+		mainGroup2.selectAll('circle').attr('fill',function(d,i){return cc[i]==1? 'yellow': color(d)})
+	}
+	
       	//function of the button "skope-rules"
        function btn(){
        			document.getElementById("formkmeans").style.visibility= "hidden ";
@@ -402,7 +414,7 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
 		       			      }
        			})
        		}	
-       		
+       //transform the string data received by the ajax to array	
 	function parsearray(str){
 		myarray=str.split(',')
 		for (i=0;i<myarray.length;i++){
@@ -411,9 +423,7 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
 		return myarray
 	}      
 
-      function showresultskope(data){
-
-      	      	      	      	
+      function showresultskope(data){  	      	      	      	
       		rule=data.rule
       		var textskope = svg.append('g').attr('id','textskope')
       		.attr('transform', `translate(${margin.left}, 50)`)
@@ -466,14 +476,12 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
 					for(i=0;i<labelcluster.length;i++){labelcluster[i]=parseInt(labelcluster[i])}
 					COLOR_cluster(NoC,labelcluster)
 					document.getElementById("kmeans_skope").style.visibility= "visible"; //show the button of skope
-					
 					Labelcluster = labelcluster
 					N_CLUSTER = NoC
 	       			      }
        	})
 	}
-	var Labelcluster = new Array()//an array to store the result of kmeans/dbscan
-	var N_CLUSTER = 0
+
 	
 	//change the colors of all points according to the result of kmeans/dbscan
 	function COLOR_cluster(N,labelcluster){
@@ -499,26 +507,24 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
 		legend.append('text').attr('dx',i*size).text(i).attr('fill','black')
 		}
 	}
-	// Skope(0) for skope-rules after kmeans. Skope(1) for skope-rules after dbscan
+	// Skope(1) for skope-rules after kmeans. Skope(2) for skope-rules after dbscan
 	function Skope(j){
-		if(j==0)
-		 	{n=document.form2.clusterchosen.value
-		      document.getElementById("showpoint1").removeAttribute("disabled");
-		 	}
 		if(j==1)
-			{n=document.form4.clusterchosen2.value
-	    		  document.getElementById("showpoint2").removeAttribute("disabled");}
+		 	{n=document.form2.clusterchosen.value}
+		if(j==2)
+			{n=document.form4.clusterchosen2.value}
 		//n is the index of cluster chosen
  		if(n==null){alert("please choose a cluster")}		
 		n = parseInt(n)
-		if(n<0){alert("please choose a legal cluster")}
+		if(n<0){alert("please choose a legal cluster")}	
 		if(n>=N_CLUSTER){alert("please choose a legal cluster")}
 		//construct a 0-1 array of size Datalength, 1 means that point is in the cluster chosen
-
+		else{
 		for(i=0;i<Datalength;i++){
 			c[i]=0
 			if(Labelcluster[i]==n){c[i]=1}
 		}
+		
 		str = c.toString()
 		
 		$.ajax({
@@ -531,12 +537,22 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
 	       			       alert("please choose some points");
 	       			       }
 	       		      else{
+	       		      	if(j==1){
+						document.getElementById("showpoint1").removeAttribute("disabled");
+						document.getElementById("returncluster").removeAttribute("disabled");}
+					else if(j==2){
+						document.getElementById("showpoint2").removeAttribute("disabled");
+						document.getElementById("returncluster2").removeAttribute("disabled");
+					}
 					d3.select("#textskope").remove()
 	       		      	showresultskope(data)
 	       		        cc = parsearray(data.pf)
+					d3.select('#legend').remove()
+					DrawPointsSelected()
 	       		      }
 	       			      }
-		})	
+		})
+		}	
 	}
 	
 	function dbscanbtn(){
@@ -592,6 +608,9 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
 		
 		document.getElementById("showpoint2").setAttribute("disabled", true);
 		document.getElementById("notshowpoint2").setAttribute("disabled", true);
+		
+		document.getElementById("returncluster").setAttribute("disabled", true);		
+		document.getElementById("returncluster2").setAttribute("disabled", true);
 
 		d3.select('#legend').remove()
 		d3.select("#textskope").remove()
@@ -629,29 +648,41 @@ You have 3 ways to choose the segment, by hand or kmeans or dbscan.
 	function showpoint(){
 		document.getElementById("showpoint").setAttribute("disabled", true);
       	      	document.getElementById("notshowpoint").removeAttribute("disabled");
-		mainGroup1.selectAll('circle').attr('fill',function(d,i){if (cc[i]==1) {return 'yellow'} else return color(d)})
-		mainGroup2.selectAll('circle').attr('fill',function(d,i){if (cc[i]==1) {return 'yellow'} else return color(d)})
+
+		document.getElementById("showpoint1").setAttribute("disabled", true);
+      	      	document.getElementById("notshowpoint1").removeAttribute("disabled");
+
+		document.getElementById("showpoint2").setAttribute("disabled", true);
+      	      	document.getElementById("notshowpoint2").removeAttribute("disabled");
+      	      	
+		DrawPointsSelectedByRule()
 	}
 	function notshowpoint(){
 		document.getElementById("notshowpoint").setAttribute("disabled", true);
       	      	document.getElementById("showpoint").removeAttribute("disabled");
-		mainGroup1.selectAll('circle').attr('fill',function(d,i){if (c[i]==1) {return 'black'} else return color(d)})
-		mainGroup2.selectAll('circle').attr('fill',function(d,i){if (c[i]==1) {return 'black'} else return color(d)})
-	}
-	
+		document.getElementById("notshowpoint1").setAttribute("disabled", true);
+      	      	document.getElementById("showpoint1").removeAttribute("disabled");
+		document.getElementById("notshowpoint2").setAttribute("disabled", true);
+      	      	document.getElementById("showpoint2").removeAttribute("disabled");
 		
-	function showpoint1(j){
-		document.getElementById("showpoint"+j).setAttribute("disabled", true);
-      	      	document.getElementById("notshowpoint"+j).removeAttribute("disabled");
-		mainGroup1.selectAll('circle').attr('fill',function(d,i){if (cc[i]==1) {return 'yellow'} else return color(d)})
-		mainGroup2.selectAll('circle').attr('fill',function(d,i){if (cc[i]==1) {return 'yellow'} else return color(d)})
-	}
-	function notshowpoint1(j){
-		document.getElementById("notshowpoint"+j).setAttribute("disabled", true);
-      	      	document.getElementById("showpoint"+j).removeAttribute("disabled");
-		COLOR_cluster(N_CLUSTER,Labelcluster)
+		DrawPointsSelected()      	      	
 	}
 	
+	
+	function returncluster(){	
+		COLOR_cluster(N_CLUSTER,Labelcluster)
+		document.getElementById("returncluster").setAttribute("disabled", true);		
+		document.getElementById("returncluster2").setAttribute("disabled", true);	
+		document.getElementById("notshowpoint1").setAttribute("disabled", true);
+		document.getElementById("notshowpoint2").setAttribute("disabled", true);		
+		document.getElementById("showpoint1").setAttribute("disabled", true);
+		document.getElementById("showpoint2").setAttribute("disabled", true);
+		document.getElementById("xgblocal1").style.visibility= "hidden"; 
+		document.getElementById("xgblocal2").style.visibility= "hidden"; 
+		document.getElementById("xgblocal3").style.visibility= "hidden"; 
+		document.getElementById("xgblocal4").style.visibility= "hidden"; 	
+		d3.select("#textskope").remove()		
+	}
 	
 		
 
